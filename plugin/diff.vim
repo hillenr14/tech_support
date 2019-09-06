@@ -74,12 +74,12 @@ function! DiffSect(tabnbr)
 endfunction
 
 
-function! DiffNbr(tabnbr)
+function! DiffNbr(tabnbr, filter)
     let regex = @/
     let foldl = foldlevel(line("."))
     let tabnbr1 = tabpagenr()
     let sc = 0
-    if  foldl > 0 
+    if  foldl > 0 && a:filter < 2 
         execute 'normal! zv'
         execute "normal! ]z"
         let end = line(".")
@@ -131,8 +131,10 @@ function! DiffNbr(tabnbr)
     let data = {}
     let regex_res = []
     let line_nbr = 0
+    let search_nbr = 0
     for line in lines1
         if line =~ regex
+            let search_nbr += 1
             let regex_res = matchlist(line, regex)
             let index = 1
             let numbers = []
@@ -145,13 +147,16 @@ function! DiffNbr(tabnbr)
                 endif
                 let index += 1
             endwhile
-            let data[line_nbr] =  [regex_res[0]] + numbers
+            let data[search_nbr] =  [regex_res[0]] + numbers
         endif
         let line_nbr += 1
     endfor
     let line_nbr = 0
+    let search_nbr = 0
+    let searchlines = []
     for line in lines2
         if line =~ regex
+            let search_nbr += 1
             let regex_res = matchlist(line, regex)
             let index = 1
             let numbers = []
@@ -168,16 +173,21 @@ function! DiffNbr(tabnbr)
             endwhile
             let index = 0
             while index < len(numbers)
-                let diff = numbers_div1m[index] - data[line_nbr][index+1]
+                let diff = numbers_div1m[index] - data[search_nbr][index+1]
                 let line = substitute(line, numbers[index], printf("%-" . strlen(numbers[index]) . "s", Mul1m(diff)), "")
                 let index +=1
             endwhile
+            let searchlines += [line]
             let lines2[line_nbr] = line
         endif
         let line_nbr += 1
     endfor
     call NewTab("DiffNbr")
-    call append(line("$"), lines2)
+    if a:filter == 0
+        call append(line("$"), lines2)
+    else
+        call append(line("$"), searchlines)
+    endif
 
 "   for result in values(data)
 "       call append(line("$"), result[0])
