@@ -34,7 +34,7 @@
 "
 "  Enjoy...
 
-highlight Marks term=reverse ctermfg=0 ctermbg=40 guibg=LightCyan
+"highlight Marks term=reverse ctermfg=0 ctermbg=40 guibg=LightCyan
 
 function! HLMarks(group)
     call clearmatches()
@@ -116,7 +116,7 @@ endfunction
 "nmap <silent> <S-F2> :call clearmatches()\|:delmarks a-z<CR>
 "nmap <silent> <F5> :call AddHLMark("Marks")<CR>
 "nmap <silent> <S-F5> :call DelHLMark("Marks")<CR>
-noremap <silent> m<leader> :call ToggleHLMark("Marks")<CR>
+noremap <silent> m<leader> :call ToggleHLMark("DiffText")<CR>
 noremap <silent> ]' :call NextMark("]")<CR>
 noremap <silent> [' :call NextMark("[")<CR>
 
