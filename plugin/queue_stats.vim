@@ -208,7 +208,7 @@ function! Lines2Qdata(lines)
     let data = {}
     for line in a:lines
         if line =~# '\v^\d{1,2}: {3}Q\a-'
-            let q_data = matchlist(line, '\v^\d{1,2}: {3}([QP]\a-[E|I]-\d{1,5}) +: (.{-}) *\*?Fwd')
+            let q_data = matchlist(line, '\v^\d{1,2}: {3}([QP]\a-[E|I]-\d{1,6}) +: (.{-}) *\*?Fwd')
 "           let q_name = complex . "_" . printf("%05d", q_data[1])
             let q_name = complex . "_" . q_data[1]
             let q_descr = substitute(q_data[2], '\v^(.{-})\s*$', '\1', '')
