@@ -2,7 +2,7 @@ function! Printc(counters, width)
     let result = ""
     let idx=0
     while idx < len (a:width)
-        if a:width[idx] > 0 
+        if a:width[idx] > 0
             if type(a:counters[idx]) == 5
                 let result = result . printf("%" . a:width[idx] . 's', Mul1k(a:counters[idx]))
             elseif idx == 0
@@ -28,7 +28,7 @@ function! CpmQStats()
     if search('\v^  \[cpmqstats\]$', "W") == 0
         return
     endif
-    if foldlevel(line(".")) > 0 
+    if foldlevel(line(".")) > 0
         execute 'normal! zO'
         execute "normal! ]z"
         let end = line(".")
@@ -45,7 +45,7 @@ function! CpmQStats()
             let nRow = 0
             let found = 1
             let iter += 1
-            if iter > 4 | break | endif 
+            if iter > 4 | break | endif
         elseif found
             if line !~# '\v^  Q\['
                 let found = 0
@@ -95,7 +95,7 @@ function! GetFoldSection(cmd_string)
         if search(a:cmd_string, "W") == 0
             break
         endif
-        if foldlevel(line(".")) > 0 
+        if foldlevel(line(".")) > 0
             execute 'normal! zv'
             let start = line(".")
             execute "normal! ]z"
@@ -127,13 +127,13 @@ function! SnapQStats()
             for idx in range(2, 9)
                 let q_data[idx] = Div1k(q_data[idx])
             endfor
-            let q_data = [substitute(q_data[1], '^\s*\(.\{-}\)\s*$', '\1', '')] + [(q_data[2]+q_data[4])*100/delta] 
+            let q_data = [substitute(q_data[1], '^\s*\(.\{-}\)\s*$', '\1', '')] + [(q_data[2]+q_data[4])*100/delta]
             \ + [(q_data[3]+q_data[5])*800/delta] + [(q_data[6]+q_data[8])*100/delta] + [(q_data[7]+q_data[9])*800/delta]
             if has_key(data, q_name)
                 echoe "Double Q name: " . q_name
                 return
             endif
-            let q_data = [q_name] + q_data 
+            let q_data = [q_name] + q_data
             let data[q_name] = deepcopy(q_data)
         elseif line =~# '\v^\d{1,2}: {3}\d{1,2}[A-H]-'
             let q_data = matchlist(line, '\v^\d{1,2}: {3}(\d{1,2})([A-H])-([E|I|Q])')
@@ -180,7 +180,7 @@ function! DeltaQStats(tab_nbr)
             endif
             let q_sum1[idx] += data1[q_name][idx]
         endfor
-    endfor    
+    endfor
     let data1["Sum       "] = deepcopy(q_sum1)
     let data2["Sum       "] = deepcopy(q_sum2)
     call NewTab("DeltaQStats")
@@ -193,7 +193,7 @@ function! DeltaQStats(tab_nbr)
         endif
     endfor
     call append(line("$"), "")
-    let templ = ["Delta queue stats in PPS and bps", 14, 30, 16, 20, 16, 20]
+    let templ = ["Delta queue stats in PPS and bps", 14, 35, 16, 20, 16, 20]
     let q_names = sort(keys(data1))
     call append(line("$"), templ[0])
     for q_name in q_names
@@ -207,24 +207,30 @@ endfunction
 function! Lines2Qdata(lines)
     let data = {}
     for line in a:lines
-        if line =~# '\v^\d{1,2}: {3}Q\a-'
+        if line =~# '\v^\d{1,2}: {3}[PQ]\a-[E|I]-\d{1,6} +: '
             let q_data = matchlist(line, '\v^\d{1,2}: {3}([QP]\a-[E|I]-\d{1,6}) +: (.{-}) *\*?Fwd')
 "           let q_name = complex . "_" . printf("%05d", q_data[1])
             let q_name = complex . "_" . q_data[1]
             let q_descr = substitute(q_data[2], '\v^(.{-})\s*$', '\1', '')
-            if line =~ '\vFwd.{-}\=\d+\/\d+.{-}Drop\=.{-}\d+\/\d+'
-                let q_data = matchlist(line, '\vFwd.{-}\=(\d+)\/(\d+).{-}Drop\=.{-}(\d+)\/(\d+)')[1:4]
-                for idx in range(0, 3)
+            if  line =~  '\vFwd.{-}\=(\d+)\/(\d+).{-} +Drop.{-}\=(\d+)\/(\d+) +Fwd.{-}(\d+)\/(\d+) +Drop.{-}\=(\d+)\/(\d+)'
+                let q_data = matchlist(line, '\vFwd.{-}\=(\d+)\/(\d+).{-} +Drop.{-}\=(\d+)\/(\d+) +Fwd.{-}(\d+)\/(\d+) +Drop.{-}\=(\d+)\/(\d+)')
+                for idx in range(1, 8)
                     let q_data[idx] = Div1k(q_data[idx])
                 endfor
-            else
+                let q_data = [q_data[1]+q_data[5]] + [q_data[2]+q_data[6]] + [q_data[3]+q_data[7]] + [q_data[4]+q_data[8]]
+            elseif  line =~  '\vFwd.{-}\=(\d+)\/(\d+).{-} +Fwd.{-}\=(\d+)\/(\d+) +Drop.{-}(\d+)\/(\d+) +Drop.{-}\=(\d+)\/(\d+)'
                 let q_data = matchlist(line, '\vFwd.{-}\=(\d+)\/(\d+).{-} +Fwd.{-}\=(\d+)\/(\d+) +Drop.{-}(\d+)\/(\d+) +Drop.{-}\=(\d+)\/(\d+)')
                 for idx in range(1, 8)
                     let q_data[idx] = Div1k(q_data[idx])
                 endfor
                 let q_data = [q_data[1]+q_data[3]] + [q_data[2]+q_data[4]] + [q_data[5]+q_data[7]] + [q_data[6]+q_data[8]]
+            elseif line =~ '\v^\d{1,2}:.{-}Fwd[^=]*\=\d+\/\d+ +Drop[^=]*\=\d+\/\d+ *$'
+                let q_data = matchlist(line, '\v^\d{1,2}:.{-}Fwd[^=]*\=(\d+)\/(\d+) +Drop[^=]*\=(\d+)\/(\d+) *$')[1:4]
+                for idx in range(0, 3)
+                    let q_data[idx] = Div1k(q_data[idx])
+                endfor
             endif
-            let q_data = [q_name, q_descr] + q_data 
+            let q_data = [q_name, q_descr] + q_data
             if has_key(data, q_name)
                 echoe "Double Q name: " . q_name
                 echoe "Line: " . line
@@ -242,11 +248,11 @@ endfunction
 function! NewTab(file_n)
     exe ":tabnew"
     exe ":tabmove"
-    exe ":silent file " . a:file_n . tabpagenr() 
+    exe ":silent file " . a:file_n . tabpagenr()
 endfunction
 
 function! Div1k(div)
-    if strlen(a:div) > 3 
+    if strlen(a:div) > 3
         let result = str2float(substitute(a:div, '\(\d\{3\}\)$', '\.\1', ''))
     else
         let result = a:div/1000.0
@@ -317,7 +323,7 @@ function! SnapPStats()
         for idx in range(1, 5)
             let p_sum[idx] += data[p_name][idx]
         endfor
-    endfor    
+    endfor
     let data["Sum"] = deepcopy(p_sum)
     call NewTab("SnapPStats")
     let templ = ["Delta port stats:", 14, 18, 14, 14, 18, 14]
@@ -376,7 +382,7 @@ function! DeltaPStats(tab_nbr, ...)
             let data1[p_name] = data1[p_name][0:5]
             let data2[p_name] = data2[p_name][0:5]
         endif
-    endfor    
+    endfor
     let data1["Sum"] = deepcopy(p_sum1)
     let data2["Sum"] = deepcopy(p_sum2)
     call NewTab("DeltaPStats")
@@ -458,7 +464,7 @@ function! Lines2pdata(lines, c_names)
             let found = 0
             let i_errors = Div1k(string(i_errors))
             let delta_ticks = p_data[-1]
-            let p_data = [p_data[0]] + [p_data[1]+p_data[2]+p_data[3]] + [i_errors] + 
+            let p_data = [p_data[0]] + [p_data[1]+p_data[2]+p_data[3]] + [i_errors] +
                         \ [p_data[4]] + [p_data[5]+p_data[6]+p_data[7]]
             let sum_ctr = 0
             for cntr in p_data
@@ -495,7 +501,7 @@ function! Lines2pdata(lines, c_names)
                     endif
                 endif
                 let idx += 1
-            endfor  
+            endfor
             if line =~# '\v^\d{1,2}: {11}(\D+)(\d+)'
                 let errors = matchlist(line, '\v^\d{1,2}: {11}(\D+)(\d+)')
                 let i_err_det[Strip(errors[1])] = Div1k(errors[2])
